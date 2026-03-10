@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AX-Executors — Private</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #9d4edd;
+    --violet: #c77dff;
+    --pink:   #ff6eb4;
+    --cyan:   #00e5ff;
+    --green:  #00f5a0;
+    --dark:   #000000;
+    --text:   #f0e6ff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #bg { position: fixed; inset: 0; z-index: 0; }
+
+  .scanlines {
+    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0,0,0,.1) 3px, rgba(0,0,0,.1) 4px
+    );
+  }
+
+  .vignette {
+    position: fixed; inset: 0; z-index: 3; pointer-events: none;
+    background: radial-gradient(ellipse 85% 85% at 50% 50%,
+      transparent 45%, rgba(0,0,0,.92) 100%);
+  }
+
+  .card-wrap {
+    position: relative; z-index: 10;
+    animation: cardIn 1s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes cardIn {
+    from { opacity:0; transform: translateY(36px) scale(.95); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  /* spinning conic glow halo */
+  .nebula-ring {
+    position: absolute;
+    inset: -70px;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0%,
+      rgba(255,110,180,.3) 15%,
+      rgba(0,229,255,.2) 30%,
+      rgba(157,78,221,.35) 50%,
+      rgba(100,30,255,.2) 65%,
+      rgba(255,110,180,.15) 80%,
+      transparent 100%
+    );
+    filter: blur(45px);
+    animation: ringRotate 9s linear infinite;
+    z-index: -1;
+  }
+  @keyframes ringRotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .card {
+    position: relative;
+    width: 510px;
+    padding: 50px 56px 44px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.04),
+      0 0 90px rgba(157,78,221,.3),
+      0 0 180px rgba(255,80,160,.1),
+      inset 0 1px 0 rgba(255,255,255,.1);
+  }
+
+  #nebula-card {
+    position: absolute; inset: 0; z-index: 0;
+    border-radius: 12px;
+  }
+
+  .card-tint {
+    position: absolute; inset: 0; z-index: 1;
+    background: rgba(3,0,12,.7);
+    border-radius: 12px;
+  }
+
+  .card-content { position: relative; z-index: 2; }
+
+  /* corner brackets */
+  .corner {
+    position: absolute; width: 22px; height: 22px; z-index: 3; pointer-events:none;
+  }
+  .corner.tl { top:-1px; left:-1px;
+    border-top: 2px solid var(--violet); border-left: 2px solid var(--violet);
+    border-radius: 12px 0 0 0; }
+  .corner.tr { top:-1px; right:-1px;
+    border-top: 2px solid var(--pink); border-right: 2px solid var(--pink);
+    border-radius: 0 12px 0 0; }
+  .corner.bl { bottom:-1px; left:-1px;
+    border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan);
+    border-radius: 0 0 0 12px; }
+  .corner.br { bottom:-1px; right:-1px;
+    border-bottom: 2px solid var(--purple); border-right: 2px solid var(--purple);
+    border-radius: 0 0 12px 0; }
+
+  .url-tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: .07em;
+    color: rgba(200,160,255,.45);
+    margin-bottom: 16px;
+  }
+  .url-tag .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 10px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100%{ opacity:1; box-shadow:0 0 10px var(--green); }
+    50%{ opacity:.3; box-shadow:0 0 4px var(--green); }
+  }
+
+  .title-row { display:flex; align-items:baseline; gap:12px; margin-bottom:8px; }
+
+  .title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px; letter-spacing: 4px; line-height: 1;
+    background: linear-gradient(120deg,
+      #fff 0%, #e8c8ff 20%, var(--pink) 45%, var(--cyan) 70%, #fff 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 22px rgba(200,120,255,.55));
+    animation: titleShimmer 5s linear infinite;
+  }
+  @keyframes titleShimmer {
+    from { background-position: 0% 0; }
+    to   { background-position: 250% 0; }
+  }
+
+  .badge {
+    padding: 3px 12px; border-radius: 3px;
+    background: rgba(162,84,255,.1);
+    border: 1px solid rgba(162,84,255,.4);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: .14em; color: var(--violet);
+    animation: badgePulse 3.5s ease-in-out infinite;
+  }
+  @keyframes badgePulse {
+    0%,100%{ box-shadow:0 0 14px rgba(162,84,255,.2); }
+    50%    { box-shadow:0 0 30px rgba(162,84,255,.55), 0 0 60px rgba(255,110,180,.15); }
+  }
+
+  .subtitle {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: .22em; text-transform: uppercase;
+    color: rgba(200,160,255,.28);
+  }
+
+  .divider {
+    width: 100%; height: 1px; margin: 26px 0; position: relative;
+    background: linear-gradient(90deg,
+      transparent, rgba(255,110,180,.5), rgba(0,229,255,.5),
+      rgba(157,78,221,.55), transparent);
+    background-size: 250% 100%;
+    animation: divFlow 3.5s linear infinite;
+  }
+  @keyframes divFlow {
+    from { background-position: 0 0; }
+    to   { background-position: 250% 0; }
+  }
+  .divider::after {
+    content:""; position:absolute;
+    left:50%; top:50%; transform:translate(-50%,-50%);
+    width:7px; height:7px; border-radius:50%;
+    background: var(--violet);
+    box-shadow: 0 0 16px var(--violet), 0 0 32px rgba(255,110,180,.4);
+    animation: gemPop 2s ease-in-out infinite;
+  }
+  @keyframes gemPop {
+    0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:1; }
+    50%    { transform:translate(-50%,-50%) scale(1.6); opacity:.7; }
+  }
+
+  .stats { display:flex; flex-direction:column; gap:7px; }
+
+  .stat-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 13px 18px; border-radius: 5px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.06);
+    position: relative; overflow: hidden;
+    transition: background .25s, border-color .25s, transform .2s;
+    animation: rowIn .7s cubic-bezier(.22,1,.36,1) both;
+  }
+  .stat-row::after {
+    content:""; position:absolute; inset:0;
+    background: linear-gradient(90deg,
+      transparent 0%, rgba(157,78,221,.09) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform .55s;
+  }
+  .stat-row:hover::after { transform: translateX(100%); }
+  .stat-row:nth-child(1){ animation-delay:.1s; }
+  .stat-row:nth-child(2){ animation-delay:.2s; }
+  .stat-row:nth-child(3){ animation-delay:.3s; }
+  .stat-row:nth-child(4){ animation-delay:.4s; }
+  @keyframes rowIn {
+    from{ opacity:0; transform:translateX(-18px); }
+    to  { opacity:1; transform:translateX(0); }
+  }
+  .stat-row:hover {
+    background: rgba(157,78,221,.08);
+    border-color: rgba(157,78,221,.22);
+    transform: translateX(5px);
+  }
+
+  .stat-label {
+    display:flex; align-items:center; gap:10px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(210,180,255,.5);
+  }
+  .stat-label .pip {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--purple); box-shadow: 0 0 8px var(--purple); flex-shrink:0;
+  }
+
+  .stat-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px; font-weight: 700; letter-spacing: .05em;
+  }
+  .stat-val.pct {
+    background: linear-gradient(90deg, var(--violet), var(--pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 9px rgba(200,120,255,.65));
+  }
+  .stat-val.platform {
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--cyan));
+    background-size: 300% 100%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(0,229,255,.45));
+    animation: platformFlow 6s ease-in-out infinite;
+  }
+  @keyframes platformFlow {
+    0%   { background-position: 0% 0; }
+    50%  { background-position: 150% 0; }
+    100% { background-position: 0% 0; }
+  }
+    color: var(--green);
+    text-shadow: 0 0 14px rgba(0,245,160,.65);
+    display:flex; align-items:center; gap:8px;
+  }
+  .stat-val.ok::before {
+    content:"";
+    width:8px; height:8px; border-radius:50%;
+    background: var(--green); box-shadow: 0 0 12px var(--green);
+    animation: blink 1.8s ease-in-out infinite;
+  }
+
+  .team-section { margin-top:24px; animation: rowIn .7s .42s cubic-bezier(.22,1,.36,1) both; }
+  .team-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .22em; text-transform: uppercase;
+    color: rgba(200,160,255,.28); margin-bottom: 12px;
+  }
+  .team-grid { display:flex; gap:8px; flex-wrap:wrap; }
+  .member {
+    padding: 6px 16px; border-radius: 4px;
+    background: rgba(157,78,221,.07);
+    border: 1px solid rgba(157,78,221,.2);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; letter-spacing: .06em; color: var(--text);
+    cursor: default;
+    transition: all .22s;
+  }
+  .member:hover {
+    background: rgba(157,78,221,.18);
+    border-color: rgba(255,110,180,.45);
+    color: #fff;
+    box-shadow: 0 0 18px rgba(255,110,180,.22), 0 0 8px rgba(157,78,221,.3);
+  }
+
+  .footer {
+    margin-top: 26px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color: rgba(200,160,255,.22); letter-spacing: .08em;
+    animation: rowIn .7s .52s cubic-bezier(.22,1,.36,1) both;
+  }
+  .footer span { color: rgba(200,160,255,.45); transition: color .2s; cursor:default; }
+  .footer span:hover { color: var(--violet); }
+  .footer .ver { display:flex; align-items:center; gap:5px; }
+  .footer .ver::before {
+    content:""; width:5px; height:5px; border-radius:50%;
+    background: var(--green); box-shadow: 0 0 6px var(--green);
+    animation: blink 2.5s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<div class="card-wrap">
+  <div class="nebula-ring"></div>
+  <div class="card">
+    <canvas id="nebula-card"></canvas>
+    <div class="card-tint"></div>
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+
+    <div class="card-content">
+      <div class="url-tag"><span class="dot"></span>ax-executors.com/privated</div>
+
+      <div class="title-row">
+        <div class="title">AX‑Executors</div>
+        <div class="badge">PRIVATE</div>
+      </div>
+      <div class="subtitle">Elite Execution Suite</div>
+
+      <div class="divider"></div>
+
+      <div class="stats">
+        <div class="stat-row">
+          <div class="stat-label"><span class="pip"></span>UNC Support</div>
+          <div class="stat-val pct">100%</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span class="pip"></span>SUNC Support</div>
+          <div class="stat-val pct">100%</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span class="pip"></span>Status</div>
+          <div class="stat-val ok">Working &amp; Undetected</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span class="pip"></span>Platform</div>
+          <div class="stat-val platform">Mobile &amp; PC</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="team-section">
+        <div class="team-label">Access List</div>
+        <div class="team-grid">
+          <div class="member">Xbiotic</div>
+          <div class="member">Alex</div>
+          <div class="member">Heat</div>
+          <div class="member">Zephyr</div>
+          <div class="member">Moon</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Crafted by <span>Xbiotic</span> &amp; <span>Alex</span></div>
+        <div class="ver">Build 2.4.1</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   ULTRA-DETAILED CINEMATIC BLACK HOLE RENDERER
+   Schwarzschild-inspired with:
+     · Pure-black cosmos + deep-field star field w/ gravitational lensing
+     · 5-layer Doppler-shifted accretion disk (hot blue-white → red)
+     · Photon sphere / photon ring with chromatic glow
+     · Relativistic bipolar jets with cone + particle streams
+     · Infalling dust spiraling into the event horizon
+     · Einstein-ring arc fragments orbiting the shadow
+     · Heat shimmer ring at event-horizon boundary
+     · Dynamic near-side brightness boost (Doppler beaming)
+     · Vortex warp effect on disk segments
+   ════════════════════════════════════════════════════════════════════ */
+const bgC = document.getElementById('bg');
+const bgX = bgC.getContext('2d');
+let W, H, BHX, BHY, R;
+function resizeBg() {
+  W = bgC.width  = window.innerWidth;
+  H = bgC.height = window.innerHeight;
+  BHX = W * .5;
+  BHY = H * .5;
+  R   = Math.min(W, H) * .20;
+}
+resizeBg();
+window.addEventListener('resize', resizeBg);
+
+/* ── STAR FIELD ── */
+const STARS = Array.from({ length: 420 }, () => ({
+  x:     Math.random(),
+  y:     Math.random(),
+  r:     Math.pow(Math.random(), 2.5) * 2.0 + .12,
+  phase: Math.random() * Math.PI * 2,
+  spd:   Math.random() * .6 + .2,
+  b:     Math.random() * .85 + .15,
+  /* colour tint: white / blue-white / warm */
+  hue:   Math.random() < .6 ? 0 : (Math.random() < .5 ? -20 : 20),
+}));
+
+/* ── DUST PARTICLES (infalling) ── */
+function mkDust() {
+  const d = Math.random() * .55 + .12;
+  return {
+    angle:   Math.random() * Math.PI * 2,
+    dist:    d,
+    angSpd:  (.003 + Math.random() * .008) * (Math.random() < .5 ? 1 : -1),
+    radSpd:  .00012 + Math.random() * .00025,
+    r:       Math.random() * .9 + .2,
+    b:       Math.random() * .7 + .3,
+    above:   Math.random() < .5,
+  };
+}
+const DUST = Array.from({ length: 280 }, mkDust);
+
+/* ── EINSTEIN RING ARC FRAGMENTS ── */
+const ARCS = Array.from({ length: 18 }, (_, i) => ({
+  ao:    (i / 18) * Math.PI * 2 + Math.random() * .4,
+  len:   Math.random() * .55 + .08,
+  inner: Math.random() < .5,
+  bri:   Math.random() * .5 + .25,
+  width: Math.random() * 1.0 + .4,
+}));
+
+/* ── JET PARTICLES ── */
+function mkJet(side) {
+  return {
+    ox:    (Math.random() - .5) * .06,
+    oy:    -(Math.random() * .55 + .04),
+    side,
+    vx:    (Math.random() - .5) * .0012,
+    vy:    -(Math.random() * .005 + .002),
+    life:   1,
+    decay:  Math.random() * .007 + .003,
+    r:      Math.random() * .85 + .25,
+  };
+}
+const JETS = [
+  ...Array.from({ length: 80 }, () => mkJet(1)),
+  ...Array.from({ length: 80 }, () => mkJet(-1)),
+];
+
+/* ── STATE ── */
+let diskAngle = 0;
+
+/* ── HELPERS ── */
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/* ════════════ MAIN RENDER ════════════ */
+function drawBH(ts) {
+  const t = ts * .001;
+  diskAngle += .0035;
+
+  bgX.clearRect(0, 0, W, H);
+
+  /* ── 1. ABSOLUTE VOID ── */
+  bgX.fillStyle = '#000';
+  bgX.fillRect(0, 0, W, H);
+
+  /* ── 2. DEEP-SPACE NEBULA CLOUD WISPS (very subtle) ── */
+  const nebDefs = [
+    { ox: -.55, oy: -.40, rb: 3.8, c: [50, 8, 90],  a: .13 },
+    { ox:  .60, oy:  .30, rb: 3.2, c: [90,15, 40],  a: .09 },
+    { ox: -.10, oy:  .55, rb: 2.8, c: [10,50,110],  a: .08 },
+    { ox:  .20, oy: -.50, rb: 2.5, c: [80,10,100],  a: .07 },
+  ];
+  nebDefs.forEach((n, i) => {
+    const cx = BHX + n.ox * R * 5 + Math.sin(t * .08 + i) * R * .2;
+    const cy = BHY + n.oy * R * 5 + Math.cos(t * .06 + i) * R * .15;
+    const gr = bgX.createRadialGradient(cx, cy, 0, cx, cy, R * n.rb);
+    gr.addColorStop(0,   `rgba(${n.c[0]},${n.c[1]},${n.c[2]},${n.a})`);
+    gr.addColorStop(.5,  `rgba(${n.c[0]},${n.c[1]},${n.c[2]},${n.a * .3})`);
+    gr.addColorStop(1,   'transparent');
+    bgX.fillStyle = gr; bgX.fillRect(0, 0, W, H);
+  });
+
+  /* ── 3. GRAVITATIONALLY LENSED STAR FIELD ── */
+  STARS.forEach(s => {
+    const sx = s.x * W, sy = s.y * H;
+    const dx = sx - BHX, dy = sy - BHY;
+    const dist = Math.sqrt(dx * dx + dy * dy) || .001;
+
+    /* Schwarzschild-like angular deflection: α = 4GM/rc² → simplified */
+    const lensFactor = clamp(1 - dist / (R * 4.5), 0, 1);
+    /* lens pushes stars outward from BH shadow */
+    const px = sx + (dx / dist) * lensFactor * R * .45;
+    const py = sy + (dy / dist) * lensFactor * R * .45;
+
+    /* stars dim as they approach / hide behind shadow */
+    const dimming  = clamp((dist - R * .95) / (R * 1.8), 0, 1);
+    const flicker  = s.b * (.8 + .2 * Math.sin(t * s.spd + s.phase)) * dimming;
+    if (flicker < .015) return;
+
+    /* colour */
+    const h = 220 + s.hue;
+    bgX.beginPath();
+    bgX.arc(px, py, s.r, 0, Math.PI * 2);
+    bgX.fillStyle = `hsla(${h},40%,95%,${flicker})`;
+    bgX.fill();
+  });
+
+  /* ── 4. RELATIVISTIC JETS ── */
+  const drawJetCone = (sign) => {
+    const jLen = R * 4.2;
+    /* outer halo */
+    const jg = bgX.createLinearGradient(BHX, BHY, BHX, BHY + sign * jLen);
+    jg.addColorStop(0,    'rgba(0,0,0,0)');
+    jg.addColorStop(.04,  'rgba(180,140,255,.40)');
+    jg.addColorStop(.25,  'rgba(120,80,230,.18)');
+    jg.addColorStop(.60,  'rgba(70,40,180,.07)');
+    jg.addColorStop(1,    'transparent');
+    const hw = R * .16;
+    bgX.save();
+    bgX.beginPath();
+    bgX.moveTo(BHX - hw,          BHY);
+    bgX.lineTo(BHX - hw * 4.0,    BHY + sign * jLen);
+    bgX.lineTo(BHX + hw * 4.0,    BHY + sign * jLen);
+    bgX.lineTo(BHX + hw,          BHY);
+    bgX.closePath();
+    bgX.fillStyle = jg; bgX.fill();
+    bgX.restore();
+    /* spine */
+    const sg = bgX.createLinearGradient(BHX, BHY, BHX, BHY + sign * jLen * .85);
+    sg.addColorStop(0,   'rgba(0,0,0,0)');
+    sg.addColorStop(.03, 'rgba(230,210,255,.75)');
+    sg.addColorStop(.35, 'rgba(180,160,255,.25)');
+    sg.addColorStop(1,   'transparent');
+    bgX.save();
+    bgX.beginPath();
+    bgX.moveTo(BHX - 2, BHY);
+    bgX.lineTo(BHX + 2, BHY);
+    bgX.lineTo(BHX + 7, BHY + sign * jLen * .85);
+    bgX.lineTo(BHX - 7, BHY + sign * jLen * .85);
+    bgX.closePath();
+    bgX.fillStyle = sg; bgX.fill();
+    bgX.restore();
+  };
+  drawJetCone(-1);
+  drawJetCone(1);
+
+  /* jet particles */
+  for (let i = JETS.length - 1; i >= 0; i--) {
+    const p = JETS[i];
+    p.ox   += p.vx;
+    p.oy   += p.vy;
+    p.life -= p.decay;
+    if (p.life <= 0) { JETS[i] = mkJet(p.side); continue; }
+    const jx = BHX + p.ox * R;
+    const jy = BHY + p.oy * R * p.side;
+    const al = p.life * .6;
+    bgX.beginPath(); bgX.arc(jx, jy, p.r, 0, Math.PI * 2);
+    bgX.fillStyle = `rgba(210,190,255,${al})`; bgX.fill();
+  }
+
+  /* ── 5. ACCRETION DISK — OUTER ELLIPTICAL HALO ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  bgX.scale(1, .25);
+  const haloG = bgX.createRadialGradient(0, 0, R * .9, 0, 0, R * 3.6);
+  haloG.addColorStop(0,    'rgba(255,140,30,.0)');
+  haloG.addColorStop(.15,  'rgba(255,120,20,.28)');
+  haloG.addColorStop(.40,  'rgba(200,70,15,.13)');
+  haloG.addColorStop(.70,  'rgba(120,30,8,.05)');
+  haloG.addColorStop(1,    'transparent');
+  bgX.fillStyle = haloG; bgX.fillRect(-R * 4, -R * 4, R * 8, R * 8);
+  bgX.restore();
+
+  /* ── 6. ACCRETION DISK RINGS with Doppler beaming ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  bgX.scale(1, .24);
+
+  /*  colFn(doppler) → [r,g,b]
+      doppler: +1 = blueshifted near side  -1 = redshifted far side */
+  const rings = [
+    /* rIn,  rOut, alpha,  colFn */
+    [R*1.03, R*1.22, .65, d => d > 0
+      ? [255, Math.floor(245 + d * 10), 255]
+      : [255, Math.floor(190 + d * 90), Math.floor(140 + d * 80)]],
+    [R*1.20, R*1.55, .42, d => d > 0
+      ? [255, Math.floor(210 + d * 45), Math.floor(90 + d * 130)]
+      : [255, Math.floor(140 + d * 70), 18]],
+    [R*1.52, R*2.05, .24, d => d > 0
+      ? [255, Math.floor(110 + d * 110), 5]
+      : [Math.floor(210 + d * 55), 40, 0]],
+    [R*2.00, R*2.75, .11, d =>
+      [Math.floor(170 + d * 55), Math.floor(50 + d * 35), 0]],
+    [R*2.70, R*3.40, .05, d =>
+      [Math.floor(110 + d * 40), Math.floor(20 + d * 20), 0]],
+  ];
+
+  rings.forEach(([rIn, rOut, baseA, colFn]) => {
+    const steps = 420;
+    for (let s = 0; s < steps; s++) {
+      const a0 = (s / steps) * Math.PI * 2 + diskAngle;
+      const a1 = ((s + 1) / steps) * Math.PI * 2 + diskAngle;
+      const dp = Math.sin(a0 - diskAngle); /* -1..1 */
+      const col = colFn(dp);
+      /* near-side brightness boost */
+      const boost = .6 + .85 * Math.max(0, dp);
+      bgX.beginPath();
+      bgX.moveTo(Math.cos(a0) * rIn, Math.sin(a0) * rIn);
+      bgX.arc(0, 0, rIn, a0, a1);
+      bgX.arc(0, 0, rOut, a1, a0, true);
+      bgX.closePath();
+      bgX.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${baseA * boost})`;
+      bgX.fill();
+    }
+  });
+
+  bgX.restore();
+
+  /* ── 7. PHOTON SPHERE (three layered glow rings) ── */
+  const photonR = R * 1.04;
+  /* chromatic rings: R G B offset for aberration */
+  [
+    { dr: 0,  col: 'rgba(255,220,110,.65)', w: 2.5 },
+    { dr: 3,  col: 'rgba(255,160,60,.22)',  w: 5   },
+    { dr: 8,  col: 'rgba(255,90,20,.10)',   w: 10  },
+    { dr: 18, col: 'rgba(200,60,0,.05)',    w: 20  },
+  ].forEach(({ dr, col, w }) => {
+    bgX.beginPath();
+    bgX.arc(BHX, BHY, photonR + dr, 0, Math.PI * 2);
+    bgX.strokeStyle = col;
+    bgX.lineWidth   = w;
+    bgX.stroke();
+  });
+
+  /* pulsing inner photon ring */
+  const pulse = .85 + .15 * Math.sin(t * 2.3);
+  const pg = bgX.createRadialGradient(BHX, BHY, photonR - 1, BHX, BHY, photonR + 4);
+  pg.addColorStop(0, `rgba(255,240,180,${.7 * pulse})`);
+  pg.addColorStop(1, 'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, photonR + 6, 0, Math.PI * 2);
+  bgX.fillStyle = pg; bgX.fill();
+
+  /* ── 8. EINSTEIN RING ARCS ── */
+  ARCS.forEach(arc => {
+    const ar = arc.inner ? R * 1.62 : R * 2.45;
+    bgX.save();
+    bgX.translate(BHX, BHY);
+    bgX.beginPath();
+    const a0 = arc.ao + diskAngle * .25;
+    bgX.arc(0, 0, ar, a0, a0 + arc.len);
+    bgX.strokeStyle = `rgba(255,235,190,${arc.bri * .32})`;
+    bgX.lineWidth   = arc.width;
+    bgX.stroke();
+    bgX.restore();
+  });
+
+  /* ── 9. INFALLING DUST (disk plane) ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  bgX.scale(1, .25);
+  DUST.forEach(d => {
+    d.angle += d.angSpd * (1 + .5 / (d.dist + .08));
+    d.dist  -= d.radSpd;
+    if (d.dist < .04) { Object.assign(d, mkDust()); return; }
+    const px = Math.cos(d.angle) * d.dist * R * 2.8;
+    const py = Math.sin(d.angle) * d.dist * R * 2.8;
+    const al = d.b * clamp(d.dist * 2.5, 0, 1) * .65;
+    const dp = Math.sin(d.angle - diskAngle);
+    const rc = dp > 0 ? 200 : 255;
+    const gc = dp > 0 ? 200 : Math.floor(120 + dp * 80);
+    bgX.beginPath(); bgX.arc(px, py, d.r, 0, Math.PI * 2);
+    bgX.fillStyle = `rgba(${rc},${gc},120,${al})`;
+    bgX.fill();
+  });
+  bgX.restore();
+
+  /* ── 10. NEAR-SIDE DISK (drawn ABOVE the shadow) ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  /* clip to upper half ellipse = near side */
+  bgX.beginPath();
+  bgX.ellipse(0, 0, R * 2.2, R * 2.2 * .24, 0, Math.PI, Math.PI * 2);
+  bgX.clip();
+  const td = bgX.createRadialGradient(0, 0, R, 0, 0, R * 2.3);
+  td.addColorStop(0,   'rgba(255,235,170,.68)');
+  td.addColorStop(.30, 'rgba(255,170,50,.38)');
+  td.addColorStop(.65, 'rgba(210,80,15,.14)');
+  td.addColorStop(1,   'transparent');
+  bgX.fillStyle = td;
+  bgX.fillRect(-R * 2.5, -R * 2.5, R * 5, R * 5);
+  bgX.restore();
+
+  /* ── 11. SHADOW GRADIENT (soft edge where disk vanishes behind BH) ── */
+  const sg = bgX.createRadialGradient(BHX, BHY, R * .55, BHX, BHY, R * 1.05);
+  sg.addColorStop(0,   '#000');
+  sg.addColorStop(.72, '#000');
+  sg.addColorStop(.90, 'rgba(0,0,0,.97)');
+  sg.addColorStop(1,   'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.06, 0, Math.PI * 2);
+  bgX.fillStyle = sg; bgX.fill();
+
+  /* ── 12. EVENT HORIZON — perfect black circle ── */
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * .97, 0, Math.PI * 2);
+  bgX.fillStyle = '#000'; bgX.fill();
+
+  /* ── 13. HEAT SHIMMER at horizon edge ── */
+  const shimmer = .5 + .5 * Math.sin(t * 4.1);
+  const hg = bgX.createRadialGradient(BHX, BHY, R * .96, BHX, BHY, R * 1.02);
+  hg.addColorStop(0,   `rgba(255,200,80,${shimmer * .35})`);
+  hg.addColorStop(.6,  `rgba(255,120,20,${shimmer * .12})`);
+  hg.addColorStop(1,   'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.02, 0, Math.PI * 2);
+  bgX.fillStyle = hg; bgX.fill();
+
+  /* ── 14. OUTER ACCRETION GLOW (atmospheric) ── */
+  const ag = bgX.createRadialGradient(BHX, BHY + R * .06, R * 1.1, BHX, BHY, R * 1.6);
+  ag.addColorStop(0,  'rgba(255,180,40,.18)');
+  ag.addColorStop(.5, 'rgba(200,80,15,.06)');
+  ag.addColorStop(1,  'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.6, 0, Math.PI * 2);
+  bgX.fillStyle = ag; bgX.fill();
+
+  requestAnimationFrame(drawBH);
+}
+requestAnimationFrame(drawBH);
+
+/* ════════════ CARD NEBULA ════════════ */
+const nc    = document.getElementById('nebula-card');
+const nX    = nc.getContext('2d');
+const cardEl = nc.closest('.card');
+function resizeNc() { nc.width = cardEl.offsetWidth; nc.height = cardEl.offsetHeight; }
+resizeNc();
+
+const NODES = [
+  { x:.12, y:.18, vx:.00040, vy:.00025, col:[170,60,255],  sz:.95 },
+  { x:.80, y:.12, vx:-.00030,vy:.00033, col:[255,75,175],  sz:.90 },
+  { x:.52, y:.52, vx:.00022, vy:-.00028,col:[30,215,255],  sz:.85 },
+  { x:.18, y:.80, vx:.00035, vy:-.00020,col:[210,45,255],  sz:.80 },
+  { x:.82, y:.72, vx:-.00027,vy:.00022, col:[255,115,70],  sz:.75 },
+  { x:.42, y:.90, vx:.00018, vy:.00030, col:[70,90,255],   sz:.72 },
+  { x:.65, y:.35, vx:-.00022,vy:-.00025,col:[255,200,80],  sz:.65 },
+];
+const SPARKS = Array.from({ length: 60 }, () => ({
+  x: Math.random(), y: Math.random(),
+  phase: Math.random() * Math.PI * 2,
+  spd:   Math.random() * .35 + .1,
+  r:     Math.random() * .8 + .3,
+}));
+
+function drawNebula(ts) {
+  const W = nc.width, H = nc.height, t = ts * .001;
+  nX.clearRect(0, 0, W, H);
+  NODES.forEach(n => {
+    n.x += n.vx + Math.sin(t * .65 + n.col[0] * .007) * .00035;
+    n.y += n.vy + Math.cos(t * .55 + n.col[1] * .007) * .00035;
+    if (n.x < 0 || n.x > 1) n.vx *= -1;
+    if (n.y < 0 || n.y > 1) n.vy *= -1;
+    const cx = n.x * W, cy = n.y * H;
+    const rad = Math.min(W, H) * n.sz * .82;
+    const a   = .14 + .06 * Math.sin(t * 1.1 + n.col[0] * .005);
+    const g = nX.createRadialGradient(cx, cy, 0, cx, cy, rad);
+    g.addColorStop(0,   `rgba(${n.col[0]},${n.col[1]},${n.col[2]},${a})`);
+    g.addColorStop(.45, `rgba(${n.col[0]},${n.col[1]},${n.col[2]},${a * .35})`);
+    g.addColorStop(1,   'transparent');
+    nX.fillStyle = g; nX.fillRect(0, 0, W, H);
+  });
+  [.22, .52, .80].forEach((yp, i) => {
+    const cy = (yp + Math.sin(t * .38 + i * 2.2) * .04) * H;
+    const colors = ['rgba(157,78,221,.06)', 'rgba(255,110,180,.05)', 'rgba(0,210,255,.045)'];
+    const gb = nX.createLinearGradient(0, cy - 70, 0, cy + 70);
+    gb.addColorStop(0, 'transparent'); gb.addColorStop(.5, colors[i]); gb.addColorStop(1, 'transparent');
+    nX.fillStyle = gb; nX.fillRect(0, cy - 70, W, 140);
+  });
+  SPARKS.forEach(s => {
+    const a = (.38 + .32 * Math.sin(t * s.spd + s.phase)) * .55;
+    nX.beginPath(); nX.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    nX.fillStyle = `rgba(225,195,255,${a})`; nX.fill();
+  });
+  requestAnimationFrame(drawNebula);
+}
+requestAnimationFrame(drawNebula);
+</script>
+</body>
+</html>
