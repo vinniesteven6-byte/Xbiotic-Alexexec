@@ -268,14 +268,17 @@
     50%  { background-position: 150% 0; }
     100% { background-position: 0% 0; }
   }
-    color: var(--green);
-    text-shadow: 0 0 14px rgba(0,245,160,.65);
+  .stat-val.ok {
+    color: #3dff85;
+    text-shadow: 0 0 18px rgba(61,255,133,.75), 0 0 42px rgba(61,255,133,.28);
     display:flex; align-items:center; gap:8px;
+    font-weight: 700;
   }
   .stat-val.ok::before {
     content:"";
     width:8px; height:8px; border-radius:50%;
-    background: var(--green); box-shadow: 0 0 12px var(--green);
+    background: #3dff85;
+    box-shadow: 0 0 10px #3dff85, 0 0 24px rgba(61,255,133,.55);
     animation: blink 1.8s ease-in-out infinite;
   }
 
@@ -303,16 +306,32 @@
   }
 
   .footer {
-    margin-top: 26px;
-    display:flex; justify-content:space-between; align-items:center;
-    font-family: 'Share Tech Mono', monospace; font-size: 11px;
-    color: rgba(200,160,255,.22); letter-spacing: .08em;
+    margin-top: 28px;
+    display:flex; flex-direction: column; align-items:center; gap: 10px;
     animation: rowIn .7s .52s cubic-bezier(.22,1,.36,1) both;
   }
-  .footer span { color: rgba(200,160,255,.45); transition: color .2s; cursor:default; }
-  .footer span:hover { color: var(--violet); }
-  .footer .ver { display:flex; align-items:center; gap:5px; }
-  .footer .ver::before {
+  .footer-owners {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    background: linear-gradient(120deg, #fff 0%, var(--violet) 40%, var(--pink) 75%, #fff 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 14px rgba(200,120,255,.55));
+    animation: titleShimmer 5s linear infinite;
+  }
+  .footer-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+    color: rgba(200,160,255,.3);
+  }
+  .footer-meta {
+    display:flex; align-items:center; gap:5px;
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color: rgba(200,160,255,.22); letter-spacing: .08em;
+  }
+  .footer-meta::before {
     content:""; width:5px; height:5px; border-radius:50%;
     background: var(--green); box-shadow: 0 0 6px var(--green);
     animation: blink 2.5s ease-in-out infinite;
@@ -377,8 +396,9 @@
       </div>
 
       <div class="footer">
-        <div>Crafted by <span>Xbiotic</span> &amp; <span>Alex</span></div>
-        <div class="ver">Build 2.4.1</div>
+        <div class="footer-label">Crafted by</div>
+        <div class="footer-owners">Xbiotic &amp; Alex</div>
+        <div class="footer-meta">Build 2.4.1</div>
       </div>
     </div>
   </div>
@@ -387,117 +407,133 @@
 
 <script>
 /* ════════════════════════════════════════════════════════════════════
-   ULTRA-DETAILED CINEMATIC BLACK HOLE RENDERER
-   Schwarzschild-inspired with:
-     · Pure-black cosmos + deep-field star field w/ gravitational lensing
-     · 5-layer Doppler-shifted accretion disk (hot blue-white → red)
-     · Photon sphere / photon ring with chromatic glow
-     · Relativistic bipolar jets with cone + particle streams
-     · Infalling dust spiraling into the event horizon
-     · Einstein-ring arc fragments orbiting the shadow
-     · Heat shimmer ring at event-horizon boundary
-     · Dynamic near-side brightness boost (Doppler beaming)
-     · Vortex warp effect on disk segments
+   INTERSTELLAR-STYLE BLACK HOLE — Gargantua faithful reproduction
+   Techniques used:
+     · Far-side disk lensed OVER the top of the shadow (gravitational lensing arc)
+     · Near-side disk blazing at the bottom with Doppler beaming
+     · Multi-layer disk: white-hot inner → orange → amber → deep red outer
+     · Photon ring thin bright band just outside the shadow
+     · Bloom glow halos with chromatic layering
+     · Infalling orbital dust on disk plane
+     · Gravitationally lensed star field (stars warp around shadow)
+     · Pure black deep-space background + faint nebula wisps
    ════════════════════════════════════════════════════════════════════ */
 const bgC = document.getElementById('bg');
 const bgX = bgC.getContext('2d');
 let W, H, BHX, BHY, R;
+
 function resizeBg() {
   W = bgC.width  = window.innerWidth;
   H = bgC.height = window.innerHeight;
   BHX = W * .5;
   BHY = H * .5;
-  R   = Math.min(W, H) * .20;
+  R   = Math.min(W, H) * .19;
 }
 resizeBg();
 window.addEventListener('resize', resizeBg);
 
 /* ── STAR FIELD ── */
-const STARS = Array.from({ length: 420 }, () => ({
+const STARS = Array.from({ length: 500 }, () => ({
   x:     Math.random(),
   y:     Math.random(),
-  r:     Math.pow(Math.random(), 2.5) * 2.0 + .12,
+  r:     Math.pow(Math.random(), 2.8) * 1.8 + .1,
   phase: Math.random() * Math.PI * 2,
-  spd:   Math.random() * .6 + .2,
-  b:     Math.random() * .85 + .15,
-  /* colour tint: white / blue-white / warm */
-  hue:   Math.random() < .6 ? 0 : (Math.random() < .5 ? -20 : 20),
+  spd:   Math.random() * .5 + .15,
+  b:     Math.random() * .9 + .1,
 }));
 
-/* ── DUST PARTICLES (infalling) ── */
+/* ── DISK DUST PARTICLES (orbital) ── */
 function mkDust() {
-  const d = Math.random() * .55 + .12;
+  const dist = Math.random() * .6 + .12;
   return {
-    angle:   Math.random() * Math.PI * 2,
-    dist:    d,
-    angSpd:  (.003 + Math.random() * .008) * (Math.random() < .5 ? 1 : -1),
-    radSpd:  .00012 + Math.random() * .00025,
-    r:       Math.random() * .9 + .2,
-    b:       Math.random() * .7 + .3,
-    above:   Math.random() < .5,
+    angle:  Math.random() * Math.PI * 2,
+    dist,
+    angSpd: (.002 + Math.random() * .006) * (Math.random() < .7 ? 1 : -1),
+    radSpd: .00008 + Math.random() * .0002,
+    r:      Math.random() * .8 + .15,
+    b:      Math.random() * .6 + .3,
   };
 }
-const DUST = Array.from({ length: 280 }, mkDust);
+const DUST = Array.from({ length: 300 }, mkDust);
 
-/* ── EINSTEIN RING ARC FRAGMENTS ── */
-const ARCS = Array.from({ length: 18 }, (_, i) => ({
-  ao:    (i / 18) * Math.PI * 2 + Math.random() * .4,
-  len:   Math.random() * .55 + .08,
-  inner: Math.random() < .5,
-  bri:   Math.random() * .5 + .25,
-  width: Math.random() * 1.0 + .4,
-}));
-
-/* ── JET PARTICLES ── */
-function mkJet(side) {
-  return {
-    ox:    (Math.random() - .5) * .06,
-    oy:    -(Math.random() * .55 + .04),
-    side,
-    vx:    (Math.random() - .5) * .0012,
-    vy:    -(Math.random() * .005 + .002),
-    life:   1,
-    decay:  Math.random() * .007 + .003,
-    r:      Math.random() * .85 + .25,
-  };
-}
-const JETS = [
-  ...Array.from({ length: 80 }, () => mkJet(1)),
-  ...Array.from({ length: 80 }, () => mkJet(-1)),
-];
-
-/* ── STATE ── */
 let diskAngle = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-/* ── HELPERS ── */
+/* ── DISK COLOR: white-hot → orange → amber → red ── */
+function diskColor(radFraction, doppler) {
+  /* radFraction: 0=inner edge, 1=outer edge */
+  /* doppler: +1=near/blue, -1=far/red */
+  const boost = 1 + .8 * Math.max(0, doppler);
+
+  let r, g, b;
+  if (radFraction < .18) {
+    /* innermost: white-hot blue-white */
+    r = 255; g = 245; b = 235;
+  } else if (radFraction < .38) {
+    /* hot: white → orange-yellow */
+    const f = (radFraction - .18) / .20;
+    r = 255;
+    g = Math.floor(lerp(235, 180, f));
+    b = Math.floor(lerp(200, 40, f));
+  } else if (radFraction < .62) {
+    /* warm: orange */
+    const f = (radFraction - .38) / .24;
+    r = 255;
+    g = Math.floor(lerp(175, 110, f));
+    b = Math.floor(lerp(35, 5, f));
+  } else if (radFraction < .82) {
+    /* cool: deep orange → red */
+    const f = (radFraction - .62) / .20;
+    r = Math.floor(lerp(250, 180, f));
+    g = Math.floor(lerp(100, 35, f));
+    b = 0;
+  } else {
+    /* outer: dim red */
+    const f = (radFraction - .82) / .18;
+    r = Math.floor(lerp(175, 80, f));
+    g = Math.floor(lerp(28, 8, f));
+    b = 0;
+  }
+
+  /* apply doppler shift: near-side boosted, far-side dimmed/reddened */
+  if (doppler > 0) {
+    /* blueshift: boost brightness slightly */
+    r = clamp(Math.floor(r * boost), 0, 255);
+    g = clamp(Math.floor(g * boost), 0, 255);
+    b = clamp(Math.floor(b + doppler * 30), 0, 255);
+  } else {
+    /* redshift: dim greens/blues */
+    g = clamp(Math.floor(g * (1 + doppler * .4)), 0, 255);
+    b = clamp(Math.floor(b * (1 + doppler * .6)), 0, 255);
+  }
+  return [r, g, b];
+}
+
 const lerp = (a, b, t) => a + (b - a) * t;
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-/* ════════════ MAIN RENDER ════════════ */
+/* ════════════ RENDER LOOP ════════════ */
 function drawBH(ts) {
   const t = ts * .001;
-  diskAngle += .0035;
+  diskAngle += .003;
 
   bgX.clearRect(0, 0, W, H);
 
-  /* ── 1. ABSOLUTE VOID ── */
+  /* ── 1. PURE BLACK COSMOS ── */
   bgX.fillStyle = '#000';
   bgX.fillRect(0, 0, W, H);
 
-  /* ── 2. DEEP-SPACE NEBULA CLOUD WISPS (very subtle) ── */
-  const nebDefs = [
-    { ox: -.55, oy: -.40, rb: 3.8, c: [50, 8, 90],  a: .13 },
-    { ox:  .60, oy:  .30, rb: 3.2, c: [90,15, 40],  a: .09 },
-    { ox: -.10, oy:  .55, rb: 2.8, c: [10,50,110],  a: .08 },
-    { ox:  .20, oy: -.50, rb: 2.5, c: [80,10,100],  a: .07 },
-  ];
-  nebDefs.forEach((n, i) => {
-    const cx = BHX + n.ox * R * 5 + Math.sin(t * .08 + i) * R * .2;
-    const cy = BHY + n.oy * R * 5 + Math.cos(t * .06 + i) * R * .15;
+  /* ── 2. FAINT NEBULA WISPS (barely visible, deep space) ── */
+  [
+    { ox: -.6, oy: -.45, rb: 4.2, c: [40, 6, 80],  a: .10 },
+    { ox:  .65, oy:  .35, rb: 3.5, c: [80, 12, 38], a: .07 },
+    { ox: -.08, oy:  .60, rb: 3.0, c: [8, 40, 100], a: .06 },
+  ].forEach((n, i) => {
+    const cx = BHX + n.ox * R * 5.5 + Math.sin(t * .07 + i) * R * .18;
+    const cy = BHY + n.oy * R * 5.5 + Math.cos(t * .05 + i) * R * .14;
     const gr = bgX.createRadialGradient(cx, cy, 0, cx, cy, R * n.rb);
-    gr.addColorStop(0,   `rgba(${n.c[0]},${n.c[1]},${n.c[2]},${n.a})`);
-    gr.addColorStop(.5,  `rgba(${n.c[0]},${n.c[1]},${n.c[2]},${n.a * .3})`);
-    gr.addColorStop(1,   'transparent');
+    gr.addColorStop(0,  `rgba(${n.c[0]},${n.c[1]},${n.c[2]},${n.a})`);
+    gr.addColorStop(.55,`rgba(${n.c[0]},${n.c[1]},${n.c[2]},${n.a * .2})`);
+    gr.addColorStop(1,  'transparent');
     bgX.fillStyle = gr; bgX.fillRect(0, 0, W, H);
   });
 
@@ -505,126 +541,53 @@ function drawBH(ts) {
   STARS.forEach(s => {
     const sx = s.x * W, sy = s.y * H;
     const dx = sx - BHX, dy = sy - BHY;
-    const dist = Math.sqrt(dx * dx + dy * dy) || .001;
-
-    /* Schwarzschild-like angular deflection: α = 4GM/rc² → simplified */
-    const lensFactor = clamp(1 - dist / (R * 4.5), 0, 1);
-    /* lens pushes stars outward from BH shadow */
-    const px = sx + (dx / dist) * lensFactor * R * .45;
-    const py = sy + (dy / dist) * lensFactor * R * .45;
-
-    /* stars dim as they approach / hide behind shadow */
-    const dimming  = clamp((dist - R * .95) / (R * 1.8), 0, 1);
-    const flicker  = s.b * (.8 + .2 * Math.sin(t * s.spd + s.phase)) * dimming;
-    if (flicker < .015) return;
-
-    /* colour */
-    const h = 220 + s.hue;
+    const dist = Math.sqrt(dx*dx + dy*dy) || .001;
+    /* deflect stars away from shadow */
+    const lf = clamp(1 - dist / (R * 5), 0, 1);
+    const px = sx + (dx / dist) * lf * R * .5;
+    const py = sy + (dy / dist) * lf * R * .5;
+    const dim = clamp((dist - R * .92) / (R * 2), 0, 1);
+    const flicker = s.b * (.8 + .2 * Math.sin(t * s.spd + s.phase)) * dim;
+    if (flicker < .012) return;
     bgX.beginPath();
     bgX.arc(px, py, s.r, 0, Math.PI * 2);
-    bgX.fillStyle = `hsla(${h},40%,95%,${flicker})`;
+    bgX.fillStyle = `rgba(215,205,255,${flicker})`;
     bgX.fill();
   });
 
-  /* ── 4. RELATIVISTIC JETS ── */
-  const drawJetCone = (sign) => {
-    const jLen = R * 4.2;
-    /* outer halo */
-    const jg = bgX.createLinearGradient(BHX, BHY, BHX, BHY + sign * jLen);
-    jg.addColorStop(0,    'rgba(0,0,0,0)');
-    jg.addColorStop(.04,  'rgba(180,140,255,.40)');
-    jg.addColorStop(.25,  'rgba(120,80,230,.18)');
-    jg.addColorStop(.60,  'rgba(70,40,180,.07)');
-    jg.addColorStop(1,    'transparent');
-    const hw = R * .16;
-    bgX.save();
-    bgX.beginPath();
-    bgX.moveTo(BHX - hw,          BHY);
-    bgX.lineTo(BHX - hw * 4.0,    BHY + sign * jLen);
-    bgX.lineTo(BHX + hw * 4.0,    BHY + sign * jLen);
-    bgX.lineTo(BHX + hw,          BHY);
-    bgX.closePath();
-    bgX.fillStyle = jg; bgX.fill();
-    bgX.restore();
-    /* spine */
-    const sg = bgX.createLinearGradient(BHX, BHY, BHX, BHY + sign * jLen * .85);
-    sg.addColorStop(0,   'rgba(0,0,0,0)');
-    sg.addColorStop(.03, 'rgba(230,210,255,.75)');
-    sg.addColorStop(.35, 'rgba(180,160,255,.25)');
-    sg.addColorStop(1,   'transparent');
-    bgX.save();
-    bgX.beginPath();
-    bgX.moveTo(BHX - 2, BHY);
-    bgX.lineTo(BHX + 2, BHY);
-    bgX.lineTo(BHX + 7, BHY + sign * jLen * .85);
-    bgX.lineTo(BHX - 7, BHY + sign * jLen * .85);
-    bgX.closePath();
-    bgX.fillStyle = sg; bgX.fill();
-    bgX.restore();
-  };
-  drawJetCone(-1);
-  drawJetCone(1);
+  /* ══════════════════════════════════════════════════════
+     DISK RENDERING — 3 layers:
+       A) FAR-SIDE BACK (behind shadow): drawn first, dimmer
+       B) LENSING ARC over top: the far disk lensed over the BH
+       C) NEAR-SIDE FRONT (in front of shadow): drawn last, brightest
+     ══════════════════════════════════════════════════════ */
 
-  /* jet particles */
-  for (let i = JETS.length - 1; i >= 0; i--) {
-    const p = JETS[i];
-    p.ox   += p.vx;
-    p.oy   += p.vy;
-    p.life -= p.decay;
-    if (p.life <= 0) { JETS[i] = mkJet(p.side); continue; }
-    const jx = BHX + p.ox * R;
-    const jy = BHY + p.oy * R * p.side;
-    const al = p.life * .6;
-    bgX.beginPath(); bgX.arc(jx, jy, p.r, 0, Math.PI * 2);
-    bgX.fillStyle = `rgba(210,190,255,${al})`; bgX.fill();
-  }
-
-  /* ── 5. ACCRETION DISK — OUTER ELLIPTICAL HALO ── */
-  bgX.save();
-  bgX.translate(BHX, BHY);
-  bgX.scale(1, .25);
-  const haloG = bgX.createRadialGradient(0, 0, R * .9, 0, 0, R * 3.6);
-  haloG.addColorStop(0,    'rgba(255,140,30,.0)');
-  haloG.addColorStop(.15,  'rgba(255,120,20,.28)');
-  haloG.addColorStop(.40,  'rgba(200,70,15,.13)');
-  haloG.addColorStop(.70,  'rgba(120,30,8,.05)');
-  haloG.addColorStop(1,    'transparent');
-  bgX.fillStyle = haloG; bgX.fillRect(-R * 4, -R * 4, R * 8, R * 8);
-  bgX.restore();
-
-  /* ── 6. ACCRETION DISK RINGS with Doppler beaming ── */
-  bgX.save();
-  bgX.translate(BHX, BHY);
-  bgX.scale(1, .24);
-
-  /*  colFn(doppler) → [r,g,b]
-      doppler: +1 = blueshifted near side  -1 = redshifted far side */
-  const rings = [
-    /* rIn,  rOut, alpha,  colFn */
-    [R*1.03, R*1.22, .65, d => d > 0
-      ? [255, Math.floor(245 + d * 10), 255]
-      : [255, Math.floor(190 + d * 90), Math.floor(140 + d * 80)]],
-    [R*1.20, R*1.55, .42, d => d > 0
-      ? [255, Math.floor(210 + d * 45), Math.floor(90 + d * 130)]
-      : [255, Math.floor(140 + d * 70), 18]],
-    [R*1.52, R*2.05, .24, d => d > 0
-      ? [255, Math.floor(110 + d * 110), 5]
-      : [Math.floor(210 + d * 55), 40, 0]],
-    [R*2.00, R*2.75, .11, d =>
-      [Math.floor(170 + d * 55), Math.floor(50 + d * 35), 0]],
-    [R*2.70, R*3.40, .05, d =>
-      [Math.floor(110 + d * 40), Math.floor(20 + d * 20), 0]],
+  const DISK_RINGS = [
+    { rIn: R * 1.04, rOut: R * 1.22, baseA: .75 },
+    { rIn: R * 1.20, rOut: R * 1.55, baseA: .52 },
+    { rIn: R * 1.52, rOut: R * 2.05, baseA: .32 },
+    { rIn: R * 2.02, rOut: R * 2.70, baseA: .16 },
+    { rIn: R * 2.65, rOut: R * 3.40, baseA: .07 },
   ];
 
-  rings.forEach(([rIn, rOut, baseA, colFn]) => {
-    const steps = 420;
+  /* ── A. FAR-SIDE disk (top half, behind BH shadow) ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  bgX.scale(1, .28);
+  /* clip to the FAR half (top = positive Y in flipped coords) */
+  bgX.save();
+  bgX.beginPath();
+  bgX.rect(-R * 4, 0, R * 8, R * 4); /* bottom half in scaled coords = far side visually = top of screen */
+  bgX.clip();
+  DISK_RINGS.forEach(({ rIn, rOut, baseA }, ri) => {
+    const steps = 320;
     for (let s = 0; s < steps; s++) {
       const a0 = (s / steps) * Math.PI * 2 + diskAngle;
       const a1 = ((s + 1) / steps) * Math.PI * 2 + diskAngle;
-      const dp = Math.sin(a0 - diskAngle); /* -1..1 */
-      const col = colFn(dp);
-      /* near-side brightness boost */
-      const boost = .6 + .85 * Math.max(0, dp);
+      const dp  = Math.sin(a0 - diskAngle) * -.7; /* far-side: dimmer */
+      const rf  = ri / (DISK_RINGS.length - 1);
+      const col = diskColor(rf, dp - .3);
+      const boost = .35 + .25 * Math.max(0, -dp);
       bgX.beginPath();
       bgX.moveTo(Math.cos(a0) * rIn, Math.sin(a0) * rIn);
       bgX.arc(0, 0, rIn, a0, a1);
@@ -634,112 +597,165 @@ function drawBH(ts) {
       bgX.fill();
     }
   });
+  bgX.restore(); /* remove far-side clip */
+  bgX.restore();
+
+  /* ── B. GRAVITATIONAL LENSING ARC over the top ──
+     This is the signature Interstellar look: the far side of the
+     accretion disk appears lensed as a bright curved arc ABOVE the shadow. */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+
+  /* Lensed arc: a squished ellipse passing over the top */
+  const lensArcY = -R * 1.01; /* just above shadow */
+  const lensW    = R * 2.2;
+  const lensH    = R * .28;
+
+  /* multi-layer glow of the lensed arc */
+  [
+    { ry: lensH * 2.8, a: .04, col: [255, 130, 30] },
+    { ry: lensH * 1.8, a: .10, col: [255, 160, 50] },
+    { ry: lensH * 1.2, a: .22, col: [255, 195, 80] },
+    { ry: lensH * .85, a: .40, col: [255, 220, 130] },
+    { ry: lensH * .55, a: .60, col: [255, 240, 180] },
+    { ry: lensH * .30, a: .80, col: [255, 250, 230] },
+  ].forEach(({ ry, a, col }) => {
+    bgX.save();
+    bgX.beginPath();
+    /* clip to upper half only */
+    bgX.rect(-lensW * 1.2, -R * 2, lensW * 2.4, R * 2);
+    bgX.clip();
+    bgX.beginPath();
+    bgX.ellipse(0, lensArcY, lensW, ry, 0, 0, Math.PI * 2);
+    bgX.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${a})`;
+    bgX.lineWidth   = ry * 2;
+    bgX.stroke();
+    bgX.restore();
+  });
 
   bgX.restore();
 
-  /* ── 7. PHOTON SPHERE (three layered glow rings) ── */
-  const photonR = R * 1.04;
-  /* chromatic rings: R G B offset for aberration */
+  /* ── SHADOW drawn here so near-side disk renders on top ── */
+  /* outer shadow fade */
+  const shG = bgX.createRadialGradient(BHX, BHY, R * .55, BHX, BHY, R * 1.08);
+  shG.addColorStop(0,   '#000');
+  shG.addColorStop(.70, '#000');
+  shG.addColorStop(.88, 'rgba(0,0,0,.97)');
+  shG.addColorStop(1,   'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.08, 0, Math.PI * 2);
+  bgX.fillStyle = shG; bgX.fill();
+  /* hard black disk */
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * .97, 0, Math.PI * 2);
+  bgX.fillStyle = '#000'; bgX.fill();
+
+  /* ── C. NEAR-SIDE disk (bottom half, in front of BH) — BRIGHTEST ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  bgX.scale(1, .28);
+  bgX.save();
+  bgX.beginPath();
+  bgX.rect(-R * 4, -R * 4, R * 8, R * 4); /* top half in scaled space = near side = bottom of screen */
+  bgX.clip();
+  DISK_RINGS.forEach(({ rIn, rOut, baseA }, ri) => {
+    const steps = 380;
+    for (let s = 0; s < steps; s++) {
+      const a0 = (s / steps) * Math.PI * 2 + diskAngle;
+      const a1 = ((s + 1) / steps) * Math.PI * 2 + diskAngle;
+      const dp  = Math.sin(a0 - diskAngle);
+      const rf  = ri / (DISK_RINGS.length - 1);
+      const col = diskColor(rf, dp);
+      /* near side: strong Doppler boost */
+      const boost = .55 + .9 * Math.max(0, dp);
+      bgX.beginPath();
+      bgX.moveTo(Math.cos(a0) * rIn, Math.sin(a0) * rIn);
+      bgX.arc(0, 0, rIn, a0, a1);
+      bgX.arc(0, 0, rOut, a1, a0, true);
+      bgX.closePath();
+      bgX.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${baseA * boost})`;
+      bgX.fill();
+    }
+  });
+  bgX.restore();
+  bgX.restore();
+
+  /* ── D. NEAR-SIDE bright cap clip (wrap over shadow) ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  bgX.beginPath();
+  bgX.ellipse(0, 0, R * 2.15, R * 2.15 * .28, 0, Math.PI, Math.PI * 2);
+  bgX.clip();
+  const nearCap = bgX.createRadialGradient(0, 0, R, 0, 0, R * 2.2);
+  nearCap.addColorStop(0,   'rgba(255,240,180,.72)');
+  nearCap.addColorStop(.28, 'rgba(255,180,60,.42)');
+  nearCap.addColorStop(.60, 'rgba(220,90,20,.16)');
+  nearCap.addColorStop(1,   'transparent');
+  bgX.fillStyle = nearCap;
+  bgX.fillRect(-R * 3, -R * 3, R * 6, R * 6);
+  bgX.restore();
+
+  /* ── 6. PHOTON RING — thin bright halo just outside shadow ── */
+  /* chromatic layers */
   [
-    { dr: 0,  col: 'rgba(255,220,110,.65)', w: 2.5 },
-    { dr: 3,  col: 'rgba(255,160,60,.22)',  w: 5   },
-    { dr: 8,  col: 'rgba(255,90,20,.10)',   w: 10  },
-    { dr: 18, col: 'rgba(200,60,0,.05)',    w: 20  },
-  ].forEach(({ dr, col, w }) => {
+    { dr:  0, w:  3.5, col: 'rgba(255,240,180,.90)' },
+    { dr:  4, w:  7,   col: 'rgba(255,200,100,.38)' },
+    { dr: 10, w: 14,   col: 'rgba(255,150,50,.16)'  },
+    { dr: 22, w: 28,   col: 'rgba(200,80,10,.07)'   },
+    { dr: 45, w: 55,   col: 'rgba(140,40,0,.03)'    },
+  ].forEach(({ dr, w, col }) => {
     bgX.beginPath();
-    bgX.arc(BHX, BHY, photonR + dr, 0, Math.PI * 2);
+    bgX.arc(BHX, BHY, R * 1.0 + dr, 0, Math.PI * 2);
     bgX.strokeStyle = col;
     bgX.lineWidth   = w;
     bgX.stroke();
   });
 
-  /* pulsing inner photon ring */
-  const pulse = .85 + .15 * Math.sin(t * 2.3);
-  const pg = bgX.createRadialGradient(BHX, BHY, photonR - 1, BHX, BHY, photonR + 4);
-  pg.addColorStop(0, `rgba(255,240,180,${.7 * pulse})`);
-  pg.addColorStop(1, 'transparent');
-  bgX.beginPath(); bgX.arc(BHX, BHY, photonR + 6, 0, Math.PI * 2);
-  bgX.fillStyle = pg; bgX.fill();
+  /* pulsing photon glow */
+  const pp = .88 + .12 * Math.sin(t * 3.1);
+  const prG = bgX.createRadialGradient(BHX, BHY, R * .98, BHX, BHY, R * 1.08);
+  prG.addColorStop(0, `rgba(255,235,160,${.65 * pp})`);
+  prG.addColorStop(1, 'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.1, 0, Math.PI * 2);
+  bgX.fillStyle = prG; bgX.fill();
 
-  /* ── 8. EINSTEIN RING ARCS ── */
-  ARCS.forEach(arc => {
-    const ar = arc.inner ? R * 1.62 : R * 2.45;
-    bgX.save();
-    bgX.translate(BHX, BHY);
-    bgX.beginPath();
-    const a0 = arc.ao + diskAngle * .25;
-    bgX.arc(0, 0, ar, a0, a0 + arc.len);
-    bgX.strokeStyle = `rgba(255,235,190,${arc.bri * .32})`;
-    bgX.lineWidth   = arc.width;
-    bgX.stroke();
-    bgX.restore();
-  });
-
-  /* ── 9. INFALLING DUST (disk plane) ── */
-  bgX.save();
-  bgX.translate(BHX, BHY);
-  bgX.scale(1, .25);
-  DUST.forEach(d => {
-    d.angle += d.angSpd * (1 + .5 / (d.dist + .08));
-    d.dist  -= d.radSpd;
-    if (d.dist < .04) { Object.assign(d, mkDust()); return; }
-    const px = Math.cos(d.angle) * d.dist * R * 2.8;
-    const py = Math.sin(d.angle) * d.dist * R * 2.8;
-    const al = d.b * clamp(d.dist * 2.5, 0, 1) * .65;
-    const dp = Math.sin(d.angle - diskAngle);
-    const rc = dp > 0 ? 200 : 255;
-    const gc = dp > 0 ? 200 : Math.floor(120 + dp * 80);
-    bgX.beginPath(); bgX.arc(px, py, d.r, 0, Math.PI * 2);
-    bgX.fillStyle = `rgba(${rc},${gc},120,${al})`;
-    bgX.fill();
-  });
-  bgX.restore();
-
-  /* ── 10. NEAR-SIDE DISK (drawn ABOVE the shadow) ── */
-  bgX.save();
-  bgX.translate(BHX, BHY);
-  /* clip to upper half ellipse = near side */
-  bgX.beginPath();
-  bgX.ellipse(0, 0, R * 2.2, R * 2.2 * .24, 0, Math.PI, Math.PI * 2);
-  bgX.clip();
-  const td = bgX.createRadialGradient(0, 0, R, 0, 0, R * 2.3);
-  td.addColorStop(0,   'rgba(255,235,170,.68)');
-  td.addColorStop(.30, 'rgba(255,170,50,.38)');
-  td.addColorStop(.65, 'rgba(210,80,15,.14)');
-  td.addColorStop(1,   'transparent');
-  bgX.fillStyle = td;
-  bgX.fillRect(-R * 2.5, -R * 2.5, R * 5, R * 5);
-  bgX.restore();
-
-  /* ── 11. SHADOW GRADIENT (soft edge where disk vanishes behind BH) ── */
-  const sg = bgX.createRadialGradient(BHX, BHY, R * .55, BHX, BHY, R * 1.05);
-  sg.addColorStop(0,   '#000');
-  sg.addColorStop(.72, '#000');
-  sg.addColorStop(.90, 'rgba(0,0,0,.97)');
-  sg.addColorStop(1,   'transparent');
-  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.06, 0, Math.PI * 2);
-  bgX.fillStyle = sg; bgX.fill();
-
-  /* ── 12. EVENT HORIZON — perfect black circle ── */
-  bgX.beginPath(); bgX.arc(BHX, BHY, R * .97, 0, Math.PI * 2);
+  /* ── 7. REDRAW BLACK DISK to keep shadow clean ── */
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * .967, 0, Math.PI * 2);
   bgX.fillStyle = '#000'; bgX.fill();
 
-  /* ── 13. HEAT SHIMMER at horizon edge ── */
-  const shimmer = .5 + .5 * Math.sin(t * 4.1);
-  const hg = bgX.createRadialGradient(BHX, BHY, R * .96, BHX, BHY, R * 1.02);
-  hg.addColorStop(0,   `rgba(255,200,80,${shimmer * .35})`);
-  hg.addColorStop(.6,  `rgba(255,120,20,${shimmer * .12})`);
-  hg.addColorStop(1,   'transparent');
-  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.02, 0, Math.PI * 2);
-  bgX.fillStyle = hg; bgX.fill();
+  /* ── 8. HEAT SHIMMER at horizon edge ── */
+  const sh = .5 + .5 * Math.sin(t * 5.2);
+  const hG = bgX.createRadialGradient(BHX, BHY, R * .95, BHX, BHY, R * 1.03);
+  hG.addColorStop(0, `rgba(255,210,100,${sh * .28})`);
+  hG.addColorStop(1, 'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.04, 0, Math.PI * 2);
+  bgX.fillStyle = hG; bgX.fill();
 
-  /* ── 14. OUTER ACCRETION GLOW (atmospheric) ── */
-  const ag = bgX.createRadialGradient(BHX, BHY + R * .06, R * 1.1, BHX, BHY, R * 1.6);
-  ag.addColorStop(0,  'rgba(255,180,40,.18)');
-  ag.addColorStop(.5, 'rgba(200,80,15,.06)');
-  ag.addColorStop(1,  'transparent');
-  bgX.beginPath(); bgX.arc(BHX, BHY, R * 1.6, 0, Math.PI * 2);
-  bgX.fillStyle = ag; bgX.fill();
+  /* ── 9. INFALLING DUST (disk plane, elliptical) ── */
+  bgX.save();
+  bgX.translate(BHX, BHY);
+  bgX.scale(1, .28);
+  DUST.forEach(d => {
+    d.angle += d.angSpd * (1 + .5 / (d.dist + .1));
+    d.dist  -= d.radSpd;
+    if (d.dist < .04) { Object.assign(d, mkDust()); return; }
+    const px = Math.cos(d.angle) * d.dist * R * 2.7;
+    const py = Math.sin(d.angle) * d.dist * R * 2.7;
+    const al = d.b * clamp(d.dist * 2.8, 0, 1) * .55;
+    const dp = Math.sin(d.angle - diskAngle);
+    const rc = dp > 0 ? 240 : 255;
+    const gc = dp > 0 ? 190 : Math.floor(130 + dp * 80);
+    bgX.beginPath(); bgX.arc(px, py, d.r, 0, Math.PI * 2);
+    bgX.fillStyle = `rgba(${rc},${gc},80,${al})`; bgX.fill();
+  });
+  bgX.restore();
+
+  /* ── 10. OUTER ATMOSPHERIC BLOOM ── */
+  const bloomG = bgX.createRadialGradient(BHX, BHY + R * .04, R * 1.08, BHX, BHY, R * 2.0);
+  bloomG.addColorStop(0,   'rgba(255,170,40,.16)');
+  bloomG.addColorStop(.40, 'rgba(200,80,15,.06)');
+  bloomG.addColorStop(.75, 'rgba(120,30,5,.02)');
+  bloomG.addColorStop(1,   'transparent');
+  bgX.beginPath(); bgX.arc(BHX, BHY, R * 2.0, 0, Math.PI * 2);
+  bgX.fillStyle = bloomG; bgX.fill();
 
   requestAnimationFrame(drawBH);
 }
