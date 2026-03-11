@@ -23,10 +23,12 @@
     color: var(--text);
     font-family: 'Rajdhani', sans-serif;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    padding: 40px 16px 60px;
   }
 
   #bg { position: fixed; inset: 0; z-index: 0; }
@@ -47,6 +49,8 @@
 
   .card-wrap {
     position: relative; z-index: 10;
+    width: 100%;
+    max-width: 510px;
     animation: cardIn 1s cubic-bezier(.22,1,.36,1) both;
   }
   @keyframes cardIn {
@@ -80,7 +84,7 @@
 
   .card {
     position: relative;
-    width: 510px;
+    width: min(510px, 100%);
     padding: 50px 56px 44px;
     border-radius: 12px;
     overflow: hidden;
@@ -90,6 +94,16 @@
       0 0 90px rgba(157,78,221,.3),
       0 0 180px rgba(255,80,160,.1),
       inset 0 1px 0 rgba(255,255,255,.1);
+  }
+
+  @media (max-width: 560px) {
+    .card { padding: 36px 28px 32px; }
+    .title { font-size: 48px; }
+    .stat-label { font-size: 12px; }
+    .stat-val { font-size: 13px; }
+    .member { font-size: 12px; padding: 5px 12px; }
+    .footer-owners { font-size: 22px; }
+    .stat-row { padding: 11px 14px; }
   }
 
   #nebula-card {
@@ -392,6 +406,7 @@
           <div class="member">Heat</div>
           <div class="member">Zephyr</div>
           <div class="member">Moon</div>
+          <div class="member">Akira</div>
         </div>
       </div>
 
